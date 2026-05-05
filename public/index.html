@@ -148,25 +148,27 @@
 <script>
 let pieChart, barChart;
 
-/* 🌍 MAP LOGIC (ONLY ADDITION) */
+const BASE_URL = "https://armsflow-v.onrender.com";
+
+/* 🌍 MAP */
 const map = new jsVectorMap({
   selector: "#map",
   map: "world",
   backgroundColor: "transparent",
 
- regionStyle: {
-  initial: {
-    fill: "#FF0000",   // light gray-blue (contrasts background)
-    fillOpacity: 0.8
+  regionStyle: {
+    initial: {
+      fill: "#6b7280",
+      fillOpacity: 0.8
+    },
+    hover: {
+      fill: "#22c55e",
+      cursor: "pointer"
+    },
+    selected: {
+      fill: "#facc15"
+    }
   },
-  hover: {
-    fill: "#00F2FF",   // bright green highlight
-    cursor: "pointer"
-  },
-  selected: {
-    fill: "#facc15"    // yellow when clicked
-  }
-},
 
   onRegionClick: function(e, code) {
     const countryMap = {
@@ -195,11 +197,12 @@ const map = new jsVectorMap({
   }
 });
 
-/* EXISTING LOGIC (UNCHANGED) */
+/* MAIN LOGIC */
 async function getData() {
   const country = document.getElementById('country').value;
 
-  const depRes = await fetch(`/dependency/${country}`);
+  // DEPENDENCY
+  const depRes = await fetch(`${BASE_URL}/dependency/${country}`);
   const depData = await depRes.json();
 
   const labels = depData.map(d => d.supplier);
@@ -211,12 +214,10 @@ async function getData() {
   pieChart = new Chart(document.getElementById('depChart'), {
     type: 'pie',
     data: {
-      labels: labels,
+      labels,
       datasets: [{
         data: values,
-        backgroundColor: [
-          '#38bdf8', '#22c55e', '#facc15', '#ef4444', '#a855f7'
-        ]
+        backgroundColor: ['#38bdf8', '#22c55e', '#facc15', '#ef4444']
       }]
     },
     options: {
@@ -226,10 +227,11 @@ async function getData() {
     }
   });
 
+  // BAR
   barChart = new Chart(document.getElementById('barChart'), {
     type: 'bar',
     data: {
-      labels: labels,
+      labels,
       datasets: [{
         label: 'Dependency %',
         data: values,
@@ -250,15 +252,19 @@ async function getData() {
   document.getElementById('depInsight').innerText =
     depData.length ? `${country} depends most on ${depData[0].supplier}` : "No data";
 
-  const riskData = await (await fetch(`/risk/${country}`)).json();
+  // RISK
+  const riskData = await (await fetch(`${BASE_URL}/risk/${country}`)).json();
   document.getElementById('riskText').innerText = riskData.riskLevel;
   document.getElementById('riskInsight').innerText =
     riskData.riskLevel === "High" ? "High risk ⚠️" : "Stable";
 
-  const infData = await (await fetch(`/influence/${country}`)).json();
-  document.getElementById('influenceText').innerText = `Score: ${infData.influenceScore}`;
+  // INFLUENCE
+  const infData = await (await fetch(`${BASE_URL}/influence/${country}`)).json();
+  document.getElementById('influenceText').innerText =
+    `Score: ${infData.influenceScore} | Countries: ${infData.countriesSupplied}`;
+
   document.getElementById('infInsight').innerText =
-    infData.countriesSupplied > 2 ? "Global influencer" : "Limited influence";
+    infData.countriesSupplied > 2 ? "Global influencer 🌍" : "Limited influence";
 }
 </script>
 

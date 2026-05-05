@@ -25,36 +25,73 @@ app.get('/add', async (req, res) => {
     await Deal.deleteMany();
 
     const sampleDeals = [
-      { from: "Russia", to: "India", weapon: "Missiles", year: 2022, value: 3000 },
-      { from: "USA", to: "India", weapon: "Drones", year: 2023, value: 1500 },
-      { from: "France", to: "India", weapon: "Fighter Jets", year: 2021, value: 4000 },
-      { from: "Israel", to: "India", weapon: "Radar Systems", year: 2020, value: 1200 },
 
-      { from: "China", to: "Pakistan", weapon: "Missiles", year: 2022, value: 2500 },
-      { from: "USA", to: "Pakistan", weapon: "Fighter Jets", year: 2019, value: 2000 },
+  // 🇮🇳 INDIA IMPORTS (strong focus)
+  { from: "Russia", to: "India", weapon: "Missiles", year: 2023, value: 4000 },
+  { from: "USA", to: "India", weapon: "Drones", year: 2024, value: 2500 },
+  { from: "France", to: "India", weapon: "Fighter Jets", year: 2022, value: 5000 },
+  { from: "Israel", to: "India", weapon: "Radar Systems", year: 2021, value: 2000 },
+  { from: "Germany", to: "India", weapon: "Submarines", year: 2023, value: 3000 },
+  { from: "UK", to: "India", weapon: "Missiles", year: 2022, value: 1800 },
+  { from: "Italy", to: "India", weapon: "Naval Systems", year: 2021, value: 1200 },
+  { from: "USA", to: "India", weapon: "Defense Systems", year: 2023, value: 2200 },
+  { from: "Russia", to: "India", weapon: "Tanks", year: 2020, value: 2600 },
 
-      { from: "USA", to: "Ukraine", weapon: "Missiles", year: 2023, value: 5000 },
-      { from: "Germany", to: "Ukraine", weapon: "Tanks", year: 2023, value: 3000 },
+  // 🇺🇸 USA EXPORTS
+  { from: "USA", to: "Ukraine", weapon: "Missiles", year: 2023, value: 5000 },
+  { from: "USA", to: "Saudi Arabia", weapon: "Fighter Jets", year: 2022, value: 6000 },
+  { from: "USA", to: "Japan", weapon: "Defense Systems", year: 2023, value: 3200 },
+  { from: "USA", to: "South Korea", weapon: "Missiles", year: 2022, value: 2800 },
+  { from: "USA", to: "Brazil", weapon: "Aircraft", year: 2020, value: 1800 },
+  { from: "USA", to: "Australia", weapon: "Submarines", year: 2023, value: 4500 },
 
-      { from: "USA", to: "Saudi Arabia", weapon: "Fighter Jets", year: 2022, value: 6000 },
-      { from: "UK", to: "Saudi Arabia", weapon: "Missiles", year: 2021, value: 3500 },
+  // 🇷🇺 RUSSIA EXPORTS
+  { from: "Russia", to: "China", weapon: "Missiles", year: 2021, value: 4000 },
+  { from: "Russia", to: "Iran", weapon: "Missiles", year: 2022, value: 3000 },
+  { from: "Russia", to: "Syria", weapon: "Weapons", year: 2021, value: 1500 },
+  { from: "Russia", to: "Vietnam", weapon: "Aircraft", year: 2023, value: 2500 },
+  { from: "Russia", to: "Algeria", weapon: "Tanks", year: 2022, value: 2200 },
 
-      { from: "France", to: "UAE", weapon: "Jets", year: 2022, value: 4500 },
+  // 🇨🇳 CHINA EXPORTS
+  { from: "China", to: "Pakistan", weapon: "Missiles", year: 2022, value: 2500 },
+  { from: "China", to: "Nigeria", weapon: "Weapons", year: 2021, value: 1200 },
+  { from: "China", to: "Bangladesh", weapon: "Naval Systems", year: 2023, value: 1700 },
+  { from: "China", to: "Myanmar", weapon: "Aircraft", year: 2022, value: 1400 },
+  { from: "China", to: "Thailand", weapon: "Tanks", year: 2023, value: 1900 },
 
-      { from: "Russia", to: "China", weapon: "Missiles", year: 2021, value: 4000 },
+  // 🇪🇺 EUROPE EXPORTS
+  { from: "France", to: "UAE", weapon: "Jets", year: 2022, value: 4500 },
+  { from: "Germany", to: "Ukraine", weapon: "Tanks", year: 2023, value: 3000 },
+  { from: "UK", to: "Saudi Arabia", weapon: "Missiles", year: 2021, value: 3500 },
+  { from: "France", to: "Egypt", weapon: "Jets", year: 2023, value: 3700 },
+  { from: "Germany", to: "Poland", weapon: "Defense Systems", year: 2022, value: 2600 },
 
-      { from: "USA", to: "Germany", weapon: "Missiles", year: 2022, value: 2000 },
-      { from: "USA", to: "UK", weapon: "Defense Systems", year: 2023, value: 2500 },
+  // 🌍 MIDDLE EAST
+  { from: "Israel", to: "Azerbaijan", weapon: "Drones", year: 2022, value: 2000 },
+  { from: "Turkey", to: "Libya", weapon: "Drones", year: 2022, value: 1600 },
+  { from: "Israel", to: "India", weapon: "Missiles", year: 2024, value: 1800 },
+  { from: "USA", to: "Israel", weapon: "Defense Systems", year: 2023, value: 3000 },
 
-      { from: "China", to: "Nigeria", weapon: "Weapons", year: 2021, value: 1200 },
+  // 🌏 ASIA PACIFIC
+  { from: "South Korea", to: "Poland", weapon: "Tanks", year: 2023, value: 2700 },
+  { from: "Japan", to: "Philippines", weapon: "Radar Systems", year: 2022, value: 1500 },
+  { from: "India", to: "Vietnam", weapon: "Missiles", year: 2023, value: 2100 },
+  { from: "India", to: "Sri Lanka", weapon: "Defense Systems", year: 2022, value: 900 },
 
-      { from: "USA", to: "Brazil", weapon: "Aircraft", year: 2020, value: 1800 },
+  // 🌍 AFRICA
+  { from: "Russia", to: "Sudan", weapon: "Weapons", year: 2021, value: 1100 },
+  { from: "China", to: "Kenya", weapon: "Vehicles", year: 2022, value: 1300 },
+  { from: "France", to: "Morocco", weapon: "Aircraft", year: 2023, value: 2100 },
 
-      { from: "Russia", to: "Iran", weapon: "Missiles", year: 2022, value: 3000 },
-      { from: "Russia", to: "Syria", weapon: "Weapons", year: 2021, value: 1500 },
+  // 🌎 AMERICAS
+  { from: "USA", to: "Canada", weapon: "Defense Systems", year: 2022, value: 2000 },
+  { from: "Brazil", to: "Argentina", weapon: "Aircraft", year: 2023, value: 1700 },
 
-      { from: "Israel", to: "Azerbaijan", weapon: "Drones", year: 2022, value: 2000 }
-    ];
+  // EXTRA LINKS
+  { from: "Italy", to: "Qatar", weapon: "Naval Systems", year: 2023, value: 2800 },
+  { from: "UK", to: "Australia", weapon: "Submarines", year: 2024, value: 4200 }
+
+];
 
     await Deal.insertMany(sampleDeals);
 
