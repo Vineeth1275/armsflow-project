@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ArmsFlow Intelligence</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Map Library -->
+  <link href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      color: white;
+      text-align: center;
+
+      background: url('https://imgs.search.brave.com/0AEd8nXSuDYreG5pAk56yBUPLa02Omr-5z849pWq_uk/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJjYXQuY29t/L3cvZnVsbC9kLzMv/ZC8yNTc1MjMtMzg0/MHgyMTYwLWRlc2t0/b3AtNGstZ2xvYmFs/LW1hcC13YWxscGFw/ZXItcGhvdG8uanBn') repeat;
+
+      background-size: 120%;
+      animation: moveMap 40s linear infinite;
+    }
+
+    @keyframes moveMap {
+      0% { background-position: 0 0; }
+      50% { background-position: 300px 100px; }
+      100% { background-position: 0 0; }
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      /* background: rgba(0, 0, 0, 0.6); */
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+
+    h1 {
+      margin-top: 20px;
+      color: #000000;
+      font-weight: bold;
+    }
+
+    input, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin: 10px;
+    }
+
+    button {
+      background: #38bdf8;
+      cursor: pointer;
+      color: black;
+      font-weight: bold;
+    }
+
+    .card {
+      /* backdrop-filter: blur(6px);
+      background: rgba(255,255,255,0.08); */
+      backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.12);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+      width: 90%;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.4);
+    }
+
+    canvas {
+      display: block;
+      margin: auto;
+    }
+
+    .chart-box {
+      width: 300px;
+      height: 300px;
+      margin: auto;
+    }
+
+    .bar-box {
+      width: 500px;
+      height: 300px;
+      margin: auto;
+    }
+
+    .highlight {
+      color: #facc15;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    /* MAP STYLE */
+    #map {
+      height: 400px;
+      margin: 20px auto;
+      max-width: 800px;
+    
+      border-radius: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1 class="card">🌍 ArmsFlow Intelligence</h1>
+
+<input type="text" id="country" placeholder="Enter Country (India)">
+<button onclick="getData()">Analyze</button>
+
+<!-- 🌍 MAP (ADDED ONLY THIS BLOCK) -->
+<div id="map" class="card"></div>
+
+<div class="card">
+  <h2>📊 Dependency</h2>
+  <div class="chart-box">
+    <canvas id="depChart"></canvas>
+  </div>
+  <div class="highlight" id="depInsight"></div>
+</div>
+
+<div class="card">
+  <h2>📊 Comparison</h2>
+  <div class="bar-box">
+    <canvas id="barChart"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⚠️ Risk</h2>
+  <h3 id="riskText"></h3>
+  <div class="highlight" id="riskInsight"></div>
+</div>
+
+<div class="card">
+  <h2>🌐 Influence</h2>
+  <h3 id="influenceText"></h3>
+  <div class="highlight" id="infInsight"></div>
+</div>
+
+<script>
+let pieChart, barChart;
+
+/* 🌍 MAP LOGIC (ONLY ADDITION) */
+const map = new jsVectorMap({
+  selector: "#map",
+  map: "world",
+  backgroundColor: "transparent",
+
+ regionStyle: {
+  initial: {
+    fill: "#FF0000",   // light gray-blue (contrasts background)
+    fillOpacity: 0.8
+  },
+  hover: {
+    fill: "#00F2FF",   // bright green highlight
+    cursor: "pointer"
+  },
+  selected: {
+    fill: "#facc15"    // yellow when clicked
+  }
+},
+
+  onRegionClick: function(e, code) {
+    const countryMap = {
+      IN: "India",
+      US: "USA",
+      RU: "Russia",
+      CN: "China",
+      PK: "Pakistan",
+      UA: "Ukraine",
+      SA: "Saudi Arabia",
+      DE: "Germany",
+      GB: "UK",
+      FR: "France",
+      IR: "Iran",
+      BR: "Brazil",
+      NG: "Nigeria",
+      AE: "UAE"
+    };
+
+    const country = countryMap[code];
+
+    if (country) {
+      document.getElementById("country").value = country;
+      getData();
+    }
+  }
+});
+
+/* EXISTING LOGIC (UNCHANGED) */
+async function getData() {
+  const country = document.getElementById('country').value;
+
+  const depRes = await fetch(`/dependency/${country}`);
+  const depData = await depRes.json();
+
+  const labels = depData.map(d => d.supplier);
+  const values = depData.map(d => parseFloat(d.percentage));
+
+  if (pieChart) pieChart.destroy();
+  if (barChart) barChart.destroy();
+
+  pieChart = new Chart(document.getElementById('depChart'), {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: [
+          '#38bdf8', '#22c55e', '#facc15', '#ef4444', '#a855f7'
+        ]
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { labels: { color: "white" } }
+      }
+    }
+  });
+
+  barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Dependency %',
+        data: values,
+        backgroundColor: '#38bdf8'
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { labels: { color: "white" } }
+      },
+      scales: {
+        x: { ticks: { color: "white" } },
+        y: { ticks: { color: "white" } }
+      }
+    }
+  });
+
+  document.getElementById('depInsight').innerText =
+    depData.length ? `${country} depends most on ${depData[0].supplier}` : "No data";
+
+  const riskData = await (await fetch(`/risk/${country}`)).json();
+  document.getElementById('riskText').innerText = riskData.riskLevel;
+  document.getElementById('riskInsight').innerText =
+    riskData.riskLevel === "High" ? "High risk ⚠️" : "Stable";
+
+  const infData = await (await fetch(`/influence/${country}`)).json();
+  document.getElementById('influenceText').innerText = `Score: ${infData.influenceScore}`;
+  document.getElementById('infInsight').innerText =
+    infData.countriesSupplied > 2 ? "Global influencer" : "Limited influence";
+}
+</script>
+
+</body>
+</html>
