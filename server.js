@@ -10,10 +10,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected ✅"))
-  .catch(err => console.log("Mongo Error ❌:", err));
+const PORT = process.env.PORT || 5000;
+
+// ------------------ ROUTES ------------------
 
 // test route
 app.get('/', (req, res) => {
@@ -23,7 +22,7 @@ app.get('/', (req, res) => {
 // ------------------ BULK DATA INSERT ------------------
 app.get('/add', async (req, res) => {
   try {
-    await Deal.deleteMany(); // clear old data
+    await Deal.deleteMany();
 
     const sampleDeals = [
       { from: "Russia", to: "India", weapon: "Missiles", year: 2022, value: 3000 },
@@ -73,70 +72,44 @@ app.get('/deals', async (req, res) => {
 
 // ------------------ DEPENDENCY ------------------
 app.get('/dependency/:country', async (req, res) => {
-  const country = req.params.country;
-
-  const deals = await Deal.find({ to: country });
+  const deals = await Deal.find({ to: req.params.country });
 
   let total = 0;
   let supplierMap = {};
 
   deals.forEach(deal => {
     total += deal.value;
-
-    if (!supplierMap[deal.from]) {
-      supplierMap[deal.from] = 0;
-    }
-    supplierMap[deal.from] += deal.value;
+    supplierMap[deal.from] = (supplierMap[deal.from] || 0) + deal.value;
   });
 
-  let result = [];
-
-  for (let supplier in supplierMap) {
-    result.push({
-      supplier,
-      percentage: ((supplierMap[supplier] / total) * 100).toFixed(2)
-    });
-  }
+  let result = Object.keys(supplierMap).map(supplier => ({
+    supplier,
+    percentage: ((supplierMap[supplier] / total) * 100).toFixed(2)
+  }));
 
   res.json(result);
 });
 
 // ------------------ RISK ------------------
 app.get('/risk/:country', async (req, res) => {
-  const country = req.params.country;
-
-  const deals = await Deal.find({ to: country });
+  const deals = await Deal.find({ to: req.params.country });
 
   let total = 0;
   let highRiskWeapons = ["Missiles", "Nuclear", "Fighter Jets"];
 
   deals.forEach(deal => {
     total += deal.value;
-
-    if (highRiskWeapons.includes(deal.weapon)) {
-      total += 1000;
-    }
+    if (highRiskWeapons.includes(deal.weapon)) total += 1000;
   });
 
-  let riskLevel = "Low";
+  let riskLevel = total > 5000 ? "High" : total > 2000 ? "Medium" : "Low";
 
-  if (total > 5000) {
-    riskLevel = "High";
-  } else if (total > 2000) {
-    riskLevel = "Medium";
-  }
-
-  res.json({
-    country,
-    riskLevel
-  });
+  res.json({ country: req.params.country, riskLevel });
 });
 
 // ------------------ INFLUENCE ------------------
 app.get('/influence/:country', async (req, res) => {
-  const country = req.params.country;
-
-  const deals = await Deal.find({ from: country });
+  const deals = await Deal.find({ from: req.params.country });
 
   let countriesSet = new Set();
   let totalValue = 0;
@@ -149,13 +122,22 @@ app.get('/influence/:country', async (req, res) => {
   let influenceScore = countriesSet.size * 10 + totalValue / 1000;
 
   res.json({
-    country,
+    country: req.params.country,
     influenceScore: influenceScore.toFixed(2),
     countriesSupplied: countriesSet.size
   });
 });
 
-// ------------------ START SERVER ------------------
-app.listen(process.env.PORT || 5000, () => {
-  console.log("Server running 🚀");
-});
+// ------------------ CONNECT DB + START SERVER ------------------
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB Connected ✅");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT} 🚀`);
+    });
+
+  })
+  .catch(err => {
+    console.error("MongoDB Connection Failed ❌", err);
+  });
